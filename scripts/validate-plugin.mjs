@@ -1,13 +1,21 @@
 import { readFile, stat } from 'node:fs/promises';
-const manifest = JSON.parse(await readFile('claude-plugin/.claude-plugin/plugin.json', 'utf8'));
+
+const pluginRoot = 'plugins/grok-it';
+const manifest = JSON.parse(await readFile(`${pluginRoot}/.claude-plugin/plugin.json`, 'utf8'));
 for (const key of ['name', 'version', 'description']) {
   if (!manifest[key]) throw new Error(`Claude plugin manifest missing ${key}`);
 }
-await stat('claude-plugin/.mcp.json');
-await stat('claude-plugin/skills/grok-tools/SKILL.md');
-const mcp = JSON.parse(await readFile('claude-plugin/.mcp.json', 'utf8'));
-if (!mcp.mcpServers?.['grok-it']?.command) throw new Error('Claude .mcp.json missing grok-it stdio command');
-const args = mcp.mcpServers['grok-it'].args || [];
-if (!args.includes('${CLAUDE_PLUGIN_ROOT}/dist/index.js')) throw new Error('Claude .mcp.json must point to bundled plugin-root dist/index.js');
-await stat('claude-plugin/dist/index.js');
-console.log('Claude plugin static validation passed');
+if (manifest.skills !== './skills/') throw new Error('Claude plugin manifest must reference shared ./skills/');
+if (manifest.mcpServers !== './.mcp.json') throw new Error('Claude plugin manifest must reference shared ./.mcp.json');
+
+await stat(`${pluginRoot}/.codex-plugin/plugin.json`);
+await stat(`${pluginRoot}/.mcp.json`);
+await stat(`${pluginRoot}/skills/grok-tools/SKILL.md`);
+
+const mcp = JSON.parse(await readFile(`${pluginRoot}/.mcp.json`, 'utf8'));
+const server = mcp.mcpServers?.['grok-it'];
+if (!server?.command) throw new Error('Shared .mcp.json missing grok-it stdio command');
+if (server.command !== 'npx') throw new Error('Shared .mcp.json must launch grok-it-mcp via npx for npm CLI distribution');
+const args = server.args || [];
+if (!args.includes('grok-it-mcp@0.1.0')) throw new Error('Shared .mcp.json must pin grok-it-mcp@0.1.0');
+console.log('Cross-platform Claude plugin static validation passed');

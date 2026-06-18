@@ -1,0 +1,12 @@
+{
+  "name": "grok-it",
+  "version": "0.1.0",
+  "description": "Claude Code plugin that exposes Grok x_search, image generation, and video generation through a local MCP server.",
+  "author": {
+    "name": "local"
+  },
+  "homepage": "https://github.com/local/grok-it",
+  "license": "MIT",
+  "skills": "./skills/",
+  "mcpServers": "./.mcp.json"
+}

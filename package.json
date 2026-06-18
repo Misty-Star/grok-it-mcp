@@ -8,20 +8,19 @@
   },
   "files": [
     "dist",
-    "claude-plugin",
-    "codex",
-    "README.md"
+    "README.md",
+    "plugins"
   ],
   "engines": {
     "node": ">=20"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json && node scripts/make-bin-executable.mjs && node scripts/sync-plugin-dist.mjs",
+    "build": "tsc -p tsconfig.json && node scripts/make-bin-executable.mjs",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "test": "vitest run",
     "validate:plugin": "node scripts/validate-plugin.mjs",
-    "validate:codex": "node scripts/validate-codex.mjs",
-    "validate": "npm run typecheck && npm test && npm run build && npm run validate:plugin && npm run validate:codex"
+    "validate": "npm run typecheck && npm test && npm run build && npm run validate:plugin && npm run validate:codex-plugin",
+    "validate:codex-plugin": "node scripts/validate-codex-plugin.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "1.29.0",

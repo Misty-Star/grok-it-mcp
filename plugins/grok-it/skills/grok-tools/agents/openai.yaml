@@ -1,0 +1,13 @@
+interface:
+  display_name: Grok Tools
+  short_description: Call Grok X search, image generation, and video generation.
+  default_prompt: Use $grok-tools with the grok-it MCP tools for X search, image generation, video generation, and Grok OAuth/API-key auth checks.
+policy:
+  allow_implicit_invocation: true
+dependencies:
+  tools:
+    - grok_auth_status
+    - grok_login
+    - grok_x_search
+    - grok_image_generate
+    - grok_video_generate
