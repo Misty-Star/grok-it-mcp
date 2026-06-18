@@ -1,0 +1,37 @@
+{
+  "name": "grok-it-mcp",
+  "version": "0.1.0",
+  "description": "Claude Code and Codex plugin wrapper around a local MCP server for Grok x_search, image generation, and video generation.",
+  "type": "module",
+  "bin": {
+    "grok-it-mcp": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "claude-plugin",
+    "codex",
+    "README.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json && node scripts/make-bin-executable.mjs && node scripts/sync-plugin-dist.mjs",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "test": "vitest run",
+    "validate:plugin": "node scripts/validate-plugin.mjs",
+    "validate:codex": "node scripts/validate-codex.mjs",
+    "validate": "npm run typecheck && npm test && npm run build && npm run validate:plugin && npm run validate:codex"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.29.0",
+    "zod": "3.25.76"
+  },
+  "devDependencies": {
+    "@types/node": "24.10.1",
+    "toml": "3.0.0",
+    "typescript": "5.9.3",
+    "vitest": "4.0.15",
+    "yaml": "2.8.2"
+  }
+}
