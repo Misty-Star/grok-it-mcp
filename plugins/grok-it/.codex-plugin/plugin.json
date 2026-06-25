@@ -1,11 +1,11 @@
 {
   "name": "grok-it",
   "version": "0.1.0",
-  "description": "Cross-platform Claude Code and Codex plugin that exposes Grok x_search, image generation, and video generation through a local MCP server.",
+  "description": "Codex plugin that exposes Grok x_search, image generation, and video generation through a local MCP server.",
   "author": {
-    "name": "local"
+    "name": "Misty-Star"
   },
-  "homepage": "https://github.com/local/grok-it",
+  "homepage": "https://github.com/Misty-Star/grok-it-mcp",
   "license": "MIT",
   "keywords": [
     "grok",
@@ -21,13 +21,9 @@
     "displayName": "Grok It",
     "shortDescription": "Use Grok X search, image, and video tools in Codex.",
     "longDescription": "Grok It bundles a shared cross-platform plugin root with a local MCP server and skill guidance so Claude Code and Codex agents can call Grok OAuth or xAI API-key backed X search, image generation, and video generation tools.",
-    "developerName": "local",
+    "developerName": "Misty-Star",
     "category": "Productivity",
-    "capabilities": [
-      "Interactive",
-      "Read",
-      "Write"
-    ],
+    "capabilities": ["Interactive", "Read", "Write"],
     "defaultPrompt": [
       "Search X with Grok for recent context.",
       "Generate an image with Grok.",

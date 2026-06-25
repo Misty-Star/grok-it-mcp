@@ -1,0 +1,31 @@
+{
+  "name": "grok-it",
+  "description": "Claude Code plugin that exposes Grok X search, image generation, and video generation through a local MCP server.",
+  "version": "0.1.0",
+  "owner": {
+    "name": "Misty-Star",
+    "url": "https://github.com/Misty-Star/grok-it-mcp"
+  },
+  "plugins": [
+    {
+      "name": "grok-it",
+      "source": ".",
+      "description": "Use Grok X search, image generation, and video generation from xAI subscription.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Misty-Star",
+        "url": "https://github.com/Misty-Star/grok-it-mcp"
+      },
+      "category": "productivity",
+      "tags": [
+        "grok",
+        "xai",
+        "x-search",
+        "image-generation",
+        "video-generation",
+        "mcp"
+      ],
+      "homepage": "https://github.com/Misty-Star/grok-it-mcp"
+    }
+  ]
+}
