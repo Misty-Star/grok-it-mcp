@@ -1,15 +1,14 @@
 {
   "name": "grok-it-mcp",
-  "version": "0.1.0",
-  "description": "Claude Code and Codex plugin wrapper around a local MCP server for Grok x_search, image generation, and video generation.",
+  "version": "0.2.0",
+  "description": "Agent plugin wrapper around a local MCP server for Grok x_search, image generation, and video generation.",
   "type": "module",
   "bin": {
     "grok-it-mcp": "dist/index.js"
   },
   "files": [
     "dist",
-    "README.md",
-    "plugins"
+    "README.md"
   ],
   "engines": {
     "node": ">=20"

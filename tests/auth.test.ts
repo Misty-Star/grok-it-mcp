@@ -23,6 +23,8 @@ describe('oauth helpers', () => {
       nonce: 'nonce',
     });
     expect(pkce.verifier).not.toEqual(pkce.challenge);
+    expect(url).toContain('client_id=b1a00492-073a-47ea-816f-4c329264a828');
+    expect(url).toContain('scope=openid+profile+email+offline_access+grok-cli%3Aaccess+api%3Aaccess');
     expect(url).toContain('code_challenge_method=S256');
     expect(url).toContain('state=state');
   });

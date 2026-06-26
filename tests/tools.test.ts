@@ -1,4 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
+import { mkdir, rm } from 'node:fs/promises';
+import os from 'node:os';
+import path from 'node:path';
 import { buildXSearchPayload, handleXSearch } from '../src/tools/x-search.js';
 import { buildImagePayload, handleImageGenerate } from '../src/tools/image-generate.js';
 import { buildVideoPayload, handleVideoGenerate } from '../src/tools/video-generate.js';
@@ -26,9 +29,15 @@ describe('tool handlers', () => {
   });
 
   it('handles image b64 output without real network', async () => {
+    const cacheDir = path.join(os.tmpdir(), `grok-it-tools-${process.pid}-image-cache`);
+    await rm(cacheDir, { recursive: true, force: true });
+    await mkdir(cacheDir, { recursive: true });
+    vi.stubEnv('GROK_IT_CACHE_DIR', cacheDir);
     const client = { json: vi.fn().mockResolvedValue({ data: { data: [{ b64_json: Buffer.from('png').toString('base64'), mime_type: 'image/png' }] }, credentials }) } as unknown as XaiClient;
     const result = await handleImageGenerate({ prompt: 'q' }, client);
+    expect(result.images[0].image).toContain(cacheDir);
     expect(result.images[0].image).toContain('image-');
+    vi.unstubAllEnvs();
   });
 
   it('video returns remote URL by default without downloading', async () => {

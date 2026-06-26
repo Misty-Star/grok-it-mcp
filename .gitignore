@@ -1,0 +1,70 @@
+# Project-local references and OMX runtime state
+references/
+.omx/
+
+# Dependencies
+node_modules/
+.pnp/
+.pnp.*
+
+# Build outputs
+dist/
+*.tsbuildinfo
+
+# Test / coverage / reports
+coverage/
+.vitest/
+.nyc_output/
+test-results/
+playwright-report/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment and local secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+
+# Local Grok/xAI auth and generated artifacts
+.grok-it/
+.grok-it-*/
+artifacts/
+.cache/
+.cache-*/
+
+# Package manager / tool caches
+.npm/
+.yarn/
+.pnpm-store/
+.eslintcache
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.swo
+
+# Temporary files
+.tmp/
+tmp/
+temp/
+*.tmp
+*.bak
+
+plugins/*/dist/
+
+# npm package artifacts
+*.tgz

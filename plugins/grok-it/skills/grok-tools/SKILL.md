@@ -1,6 +1,6 @@
 ---
 name: grok-tools
-description: "Use when Claude Code or Codex should call Grok/xAI MCP tools for X search, image generation, video generation, Grok OAuth login/status, or XAI_API_KEY fallback through the grok-it MCP server."
+description: "Use when Agent should call Grok/xAI MCP tools for X search, image generation, video generation, Grok OAuth login/status, or XAI_API_KEY fallback through the grok-it MCP server."
 ---
 
 # Grok Tools
