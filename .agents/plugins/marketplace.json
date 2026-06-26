@@ -8,7 +8,7 @@
       "name": "grok-it",
       "source": {
         "source": "local",
-        "path": "."
+        "path": "./plugins/grok-it"
       },
       "policy": {
         "installation": "AVAILABLE",

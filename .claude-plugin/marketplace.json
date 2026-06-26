@@ -9,7 +9,7 @@
   "plugins": [
     {
       "name": "grok-it",
-      "source": ".",
+      "source": "./plugins/grok-it",
       "description": "Use Grok X search, image generation, and video generation from xAI subscription.",
       "version": "0.1.0",
       "author": {
