@@ -51,6 +51,17 @@ npm install -g grok-it-mcp
 grok-it-mcp login --open
 ```
 
+### 🖥️ 远程 / 无头环境
+
+在服务器、容器或 SSH 会话等没有可用浏览器的环境中，登录流程会打印授权 URL，而不是打开浏览器。
+
+注意：loopback 监听仍然运行在远程机器的 `127.0.0.1:8765`。xAI redirect 需要访问这个监听地址，所以如果你直接在本地电脑浏览器打开授权 URL，可能会失败，除非先转发端口：
+
+```bash
+ssh -N -L 8765:127.0.0.1:8765 user@remote-host
+grok-it-mcp login --loopback
+```
+
 也可以在终端检查本地认证状态，并快速测试 X Search 连通性：
 
 ```bash
@@ -58,19 +69,37 @@ grok-it-mcp status
 grok-it-mcp search "xAI news"
 ```
 
-### 🛒 添加市场（只需一次）
+### 🛒 Codex CLI：添加市场（只需一次）
+
+```bash
+codex plugin marketplace add Misty-Star/grok-it-mcp
+```
+
+### ⚡ Codex CLI：安装插件
+
+```bash
+codex plugin add grok-it@grok-it
+```
+
+### 🔄 Codex CLI：更新市场
+
+```bash
+codex plugin marketplace upgrade grok-it
+```
+
+### 🧩 Claude Code：添加市场（只需一次）
 
 ```text
 /plugin marketplace add Misty-Star/grok-it-mcp
 ```
 
-### ⚡ 安装插件
+### ⚡ Claude Code：安装插件
 
 ```text
 /plugin install grok-it@grok-it
 ```
 
-### 🔄 更新市场
+### 🔄 Claude Code：更新市场
 
 ```text
 /plugin marketplace update grok-it

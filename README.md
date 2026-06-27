@@ -1,106 +1,127 @@
-# grok-it MCP Plugin
+# 🧠 Grok It
 
-Local TypeScript stdio MCP server published as an npm CLI package, plus shared Claude Code + Codex plugin wrappers for Grok/xAI.
+🌐 Languages: **English** | [简体中文](./README_CN.md)
 
-- `grok_x_search` — xAI Responses API with built-in `x_search`.
-- `grok_image_generate` — `/images/generations`, cached locally by default.
-- `grok_video_generate` — `/videos/generations`, polling; returns remote URL by default, optional local cache.
-- `grok_auth_status` / `grok_login` — Grok OAuth PKCE status/login with `XAI_API_KEY` fallback.
+---
 
-## npm CLI
+## ✨ What is Grok It?
 
-Install the server directly:
+**Grok It** is a Codex / Claude Code plugin for Agents. It connects Grok / xAI capabilities to local Agent workflows through a local MCP server.
+
+After installation, Agents can use this plugin to access:
+
+- 🔎 **X Search / x_search**: use Grok subscription-backed X / Twitter search for recent or real-time social context.
+- 🖼️ **Image generation**: let Agents call Grok / xAI image generation and cache generated files by default.
+- 🎬 **Video generation**: let Agents generate short videos, returning remote URLs by default with optional local caching.
+- 🔐 **Authentication support**: use Grok OAuth login, with `XAI_API_KEY` as a fallback option.
+
+## 🧩 Use Cases
+
+- 📰 Search recent X discussions, trends, sentiment, or account activity.
+- 🎨 Generate images, illustrations, creative assets, or visual references from prompts.
+- 📹 Generate short video assets from prompts or reference images.
+- 🤖 Add Grok-powered tools to Codex / Claude Code Agents.
+
+## 📦 What is included?
+
+This plugin directory includes:
+
+- 🛠️ `.mcp.json`: registers the local `grok-it` MCP server.
+- 🧠 `skills/grok-tools/`: guidance that tells Agents when and how to use Grok tools.
+- 🧾 `.codex-plugin/plugin.json`: Codex plugin manifest.
+- 🧾 `.claude-plugin/plugin.json`: Claude Code plugin manifest.
+
+## 🚀 How to Install This Plugin
+
+> Official marketplace: `Misty-Star/grok-it-mcp`; plugin name: `grok-it`; marketplace name: `grok-it`.
+
+### 📦 Install the npm CLI first
+
+Install the local MCP server CLI globally:
 
 ```bash
 npm install -g grok-it-mcp
 ```
 
-Or run it ad hoc:
+### 🔐 Log in to Grok
+
+Open the browser-based OAuth login flow:
 
 ```bash
-npx -y grok-it-mcp@0.1.0
+grok-it-mcp login --open
 ```
 
-The default CLI starts the stdio MCP server defined in `src/index.ts`. It also exposes auth helpers for terminal use:
+### 🖥️ Remote / headless sessions
+
+On servers, containers, or SSH sessions where no browser is available, the login flow prints the authorization URL instead of opening a browser.
+
+Important: the loopback listener still runs on the remote machine at `127.0.0.1:8765`. The xAI redirect needs to reach that listener, so opening the URL on your laptop will fail unless you forward the port:
+
+```bash
+ssh -N -L 8765:127.0.0.1:8765 user@remote-host
+grok-it-mcp login --loopback
+```
+
+You can also check local auth and run a quick X Search connectivity test from the terminal:
 
 ```bash
 grok-it-mcp status
-grok-it-mcp login --open
 grok-it-mcp search "xAI news"
-grok-it-mcp x-search "grok updates" --include-handles xai --max-results 5 --json
 ```
 
-For manual OAuth completion without a loopback browser flow:
+### 🛒 Codex CLI: add the marketplace once
 
 ```bash
-grok-it-mcp login
-grok-it-mcp login --callback '<callback-url-or-code>' --verifier '<verifier>' --state '<state>' --redirect-uri 'http://127.0.0.1:8765/callback'
+codex plugin marketplace add Misty-Star/grok-it-mcp
 ```
 
-
-### OAuth note
-
-The current default browser-login flow uses xAI's public Grok OAuth client id and the `grok-cli:access api:access` scopes. If xAI changes those values again, override them with `GROK_IT_OAUTH_CLIENT_ID` or fall back to `XAI_API_KEY`.
-
-### Search connectivity test
-
-Use `search` or its alias `x-search` to run the existing `grok_x_search` flow from a terminal. This is useful for end-to-end connectivity checks because it exercises credential resolution, xAI `/responses`, and the built-in `x_search` tool:
+### ⚡ Codex CLI: install the plugin
 
 ```bash
-grok-it-mcp search "xAI news"
-grok-it-mcp x-search --query "grok updates" --include-handles xai,elonmusk --max-results 10 --json
+codex plugin add grok-it@grok-it
 ```
 
-Supported search flags: `--model`, `--from-date`, `--to-date`, `--include-handles`, `--exclude-handles`, `--include-images`, `--include-videos`, `--max-results`, and `--json`.
-## Cross-platform plugin root
+### 🔄 Codex CLI: update the marketplace
 
-`plugins/grok-it/` is the canonical plugin root for both Claude Code and Codex:
+```bash
+codex plugin marketplace upgrade grok-it
+```
+
+### 🧩 Claude Code: add the marketplace once
 
 ```text
-plugins/grok-it/
-  .claude-plugin/plugin.json   # Claude Code manifest
-  .codex-plugin/plugin.json    # Codex manifest
-  .mcp.json                    # shared MCP server config
-  skills/grok-tools/SKILL.md   # shared skill instructions
-  skills/grok-tools/agents/openai.yaml
+/plugin marketplace add Misty-Star/grok-it-mcp
 ```
 
-Both manifests reference the same `./skills/` and `./.mcp.json`. The shared MCP config launches `npx -y grok-it-mcp@0.1.0`, so the plugin no longer bundles `dist/index.js`.
+### ⚡ Claude Code: install the plugin
 
-## Install/build
-
-```bash
-npm install
-npm run build
+```text
+/plugin install grok-it@grok-it
 ```
 
-`npm run build` typechecks and emits the CLI entrypoint.
+### 🔄 Claude Code: update the marketplace
 
-## Authentication
-
-Preferred: call MCP tool `grok_login`. It performs OAuth PKCE and stores tokens at `~/.grok-it/auth.json` (override with `GROK_IT_TOKEN_STORE`). The tool never returns token material.
-
-Fallback: set `XAI_API_KEY`. OAuth credentials take precedence over API keys. OAuth bearer requests are pinned to `https://*.x.ai` so `XAI_BASE_URL` cannot leak OAuth tokens to another origin.
-
-## Codex
-
-Install/use `plugins/grok-it/` as the Codex plugin root. The Codex manifest is at `plugins/grok-it/.codex-plugin/plugin.json`.
-
-## Claude Code
-
-Install/use the same `plugins/grok-it/` folder as the Claude Code plugin root. The Claude manifest is at `plugins/grok-it/.claude-plugin/plugin.json`.
-
-## Validation
-
-```bash
-npm run typecheck
-npm test
-npm run build
-npm run validate:plugin
-npm run validate:codex-plugin
+```text
+/plugin marketplace update grok-it
 ```
 
-- `validate:plugin` checks the shared Claude/Codex plugin root and shared MCP config.
-- `validate:codex-plugin` runs the official plugin-creator validator against `plugins/grok-it/` and checks shared skill metadata.
+## 🔑 Authentication
 
-Tests mock network behavior; they must not call real xAI APIs or open browsers.
+After installation, the Agent will usually check auth status first:
+
+- ✅ Existing OAuth login: Grok tools can be used directly.
+- 🔐 Not logged in: start Grok OAuth with `grok_login`.
+- 🗝️ API key mode: provide an xAI API key through `XAI_API_KEY`.
+
+Default local paths:
+
+- 🧾 Token store: `${HOME}/.grok-it/auth.json`
+- 📁 Artifact cache: `${HOME}/.grok-it/artifacts`
+
+## 🧰 Agent Tools
+
+- `grok_auth_status`: check OAuth / API-key availability without exposing secrets.
+- `grok_login`: start or complete Grok OAuth login.
+- `grok_x_search`: search X / Twitter with Grok.
+- `grok_image_generate`: generate images and cache image files by default.
+- `grok_video_generate`: generate videos, returning remote URLs by default with optional local caching.
