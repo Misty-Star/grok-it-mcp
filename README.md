@@ -113,10 +113,10 @@ After installation, the Agent will usually check auth status first:
 - 🔐 Not logged in: start Grok OAuth with `grok_login`.
 - 🗝️ API key mode: provide an xAI API key through `XAI_API_KEY`.
 
-Default local paths:
+Default local paths (resolved inside the MCP server/CLI, not via plugin JSON placeholders):
 
-- 🧾 Token store: `${HOME}/.grok-it/auth.json`
-- 📁 Artifact cache: `${HOME}/.grok-it/artifacts`
+- 🧾 Token store: `~/.grok-it/auth.json`
+- 📁 Artifact cache: `~/.grok-it/artifacts`
 
 ## 🧰 Agent Tools
 

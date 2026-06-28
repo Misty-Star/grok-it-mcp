@@ -4,12 +4,8 @@
       "command": "npx",
       "args": [
         "-y",
-        "grok-it-mcp@0.1.0"
-      ],
-      "env": {
-        "GROK_IT_TOKEN_STORE": "${HOME}/.grok-it/auth.json",
-        "GROK_IT_CACHE_DIR": "${HOME}/.grok-it/artifacts"
-      }
+        "grok-it-mcp@0.2.2"
+      ]
     }
   }
 }

@@ -3,6 +3,8 @@ import { spawnSync } from 'node:child_process';
 import YAML from 'yaml';
 
 const pluginRoot = 'plugins/grok-it';
+const packageJson = JSON.parse(await readFile('package.json', 'utf8'));
+const expectedPackage = `${packageJson.name}@${packageJson.version}`;
 const validator = '/home/misty/.codex/skills/.system/plugin-creator/scripts/validate_plugin.py';
 
 const result = spawnSync('python3', [validator, pluginRoot], { encoding: 'utf8' });
@@ -22,8 +24,11 @@ const server = mcp.mcpServers?.['grok-it'];
 if (!server?.command) throw new Error('Codex plugin .mcp.json missing grok-it command');
 if (server.command !== 'npx') throw new Error('Codex plugin .mcp.json must launch grok-it-mcp via npx for npm CLI distribution');
 const args = server.args || [];
-if (!args.includes('grok-it-mcp@0.1.0')) {
-  throw new Error('Codex plugin .mcp.json must pin grok-it-mcp@0.1.0');
+if (!args.includes(expectedPackage)) {
+  throw new Error(`Codex plugin .mcp.json must pin ${expectedPackage}`);
+}
+if (server.env?.GROK_IT_TOKEN_STORE || server.env?.GROK_IT_CACHE_DIR) {
+  throw new Error('Codex plugin .mcp.json must not override default paths with literal placeholders');
 }
 
 const agent = YAML.parse(await readFile(`${pluginRoot}/skills/grok-tools/agents/openai.yaml`, 'utf8'));

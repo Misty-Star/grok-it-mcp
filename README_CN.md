@@ -113,10 +113,10 @@ codex plugin marketplace upgrade grok-it
 - 🔐 未登录：通过 `grok_login` 发起 Grok OAuth 登录。
 - 🗝️ 使用 API Key：可通过环境变量 `XAI_API_KEY` 提供 xAI API key。
 
-默认本地路径：
+默认本地路径（由 MCP server/CLI 内部解析，不通过插件 JSON 占位符传入）：
 
-- 🧾 Token：`${HOME}/.grok-it/auth.json`
-- 📁 生成物缓存：`${HOME}/.grok-it/artifacts`
+- 🧾 Token：`~/.grok-it/auth.json`
+- 📁 生成物缓存：`~/.grok-it/artifacts`
 
 ## 🧰 Agent 可用工具
 
