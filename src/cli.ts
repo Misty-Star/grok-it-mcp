@@ -134,14 +134,28 @@ function printHelp(stdout: Pick<NodeJS.WriteStream, 'write'> | undefined): void 
   write(stdout, '  grok-it-mcp login --open\n');
   write(stdout, '  grok-it-mcp search "xAI news"\n');
   write(stdout, '  grok-it-mcp x-search "grok updates" --include-handles xai --max-results 5 --json\n');
-  write(stdout, '  grok-it-mcp login --callback "$CALLBACK" --verifier "$VERIFIER" --state "$STATE" --redirect-uri http://127.0.0.1:8765/callback\n');
+  write(stdout, '  grok-it-mcp login --callback "$CALLBACK" --verifier "$VERIFIER" --state "$STATE" --redirect-uri http://127.0.0.1:8153/callback\n');
+}
+
+export type OpenUrlCommand = {
+  command: string;
+  args: string[];
+};
+
+export function getOpenUrlCommand(url: string, platform: NodeJS.Platform = process.platform): OpenUrlCommand {
+  if (platform === 'darwin') return { command: 'open', args: [url] };
+  if (platform === 'win32') {
+    // Avoid `cmd /c start <url>`: cmd.exe treats `&` in OAuth query strings as
+    // command separators unless the URL is quoted exactly right, so Windows would
+    // open only `...?response_type=code` and drop `client_id` plus later params.
+    return { command: 'rundll32.exe', args: ['url.dll,FileProtocolHandler', url] };
+  }
+  return { command: 'xdg-open', args: [url] };
 }
 
 async function defaultOpenUrl(url: string): Promise<void> {
   const { spawn } = await import('node:child_process');
-  const platform = process.platform;
-  const command = platform === 'darwin' ? 'open' : platform === 'win32' ? 'cmd' : 'xdg-open';
-  const args = platform === 'win32' ? ['/c', 'start', '', url] : [url];
+  const { command, args } = getOpenUrlCommand(url);
   const child = spawn(command, args, { stdio: 'ignore', detached: true });
   child.unref();
   await new Promise<void>((resolve, reject) => {

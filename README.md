@@ -55,10 +55,10 @@ grok-it-mcp login --open
 
 On servers, containers, or SSH sessions where no browser is available, the login flow prints the authorization URL instead of opening a browser.
 
-Important: the loopback listener still runs on the remote machine at `127.0.0.1:8765`. The xAI redirect needs to reach that listener, so opening the URL on your laptop will fail unless you forward the port:
+Important: the loopback listener still runs on the remote machine at `127.0.0.1:8153`. The xAI redirect needs to reach that listener, so opening the URL on your laptop will fail unless you forward the port:
 
 ```bash
-ssh -N -L 8765:127.0.0.1:8765 user@remote-host
+ssh -N -L 8153:127.0.0.1:8153 user@remote-host
 grok-it-mcp login --loopback
 ```
 

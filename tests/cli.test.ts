@@ -1,8 +1,9 @@
 import { describe, expect, it, vi } from 'vitest';
 import { mkdir, readFile, rm } from 'node:fs/promises';
+import packageJson from '../package.json' with { type: 'json' };
 import path from 'node:path';
 import os from 'node:os';
-import { runCli } from '../src/cli.js';
+import { getOpenUrlCommand, runCli } from '../src/cli.js';
 
 type MockResponseInit = {
   ok?: boolean;
@@ -42,8 +43,24 @@ const discovery = {
 };
 
 describe('CLI', () => {
+
+  it('opens OAuth URLs on Windows without cmd.exe query-string truncation', () => {
+    const url = 'https://auth.x.ai/oauth2/authorize?response_type=code&client_id=b1a00492-073a-47ea-816f-4c329264a828&scope=openid+profile';
+    const command = getOpenUrlCommand(url, 'win32');
+
+    expect(command.command).toBe('rundll32.exe');
+    expect(command.args).toEqual(['url.dll,FileProtocolHandler', url]);
+    expect(command.args.join(' ')).toContain('&client_id=b1a00492-073a-47ea-816f-4c329264a828');
+  });
+
   it('returns -1 with no command so index can start the stdio MCP server', async () => {
     await expect(runCli({ argv: [] })).resolves.toBe(-1);
+  });
+
+  it('prints the package.json version', async () => {
+    const stdout = capture();
+    await expect(runCli({ argv: ['version'], stdout: stdout.stream })).resolves.toBe(0);
+    expect(stdout.output()).toBe(`${packageJson.version}\n`);
   });
 
   it('prints auth status as JSON', async () => {
@@ -64,7 +81,7 @@ describe('CLI', () => {
     expect(result.authorize_url).toContain('https://auth.x.ai/oauth2/authorize');
     expect(result.verifier).toEqual(expect.any(String));
     expect(result.state).toEqual(expect.any(String));
-    expect(result.redirect_uri).toBe('http://127.0.0.1:8765/callback');
+    expect(result.redirect_uri).toBe('http://127.0.0.1:8153/callback');
     expect(stdout.output()).not.toContain('access_token');
   });
 
@@ -75,9 +92,9 @@ describe('CLI', () => {
       .fn()
       .mockResolvedValueOnce(mockResponse({ body: discovery }))
       .mockResolvedValueOnce(mockResponse({ body: { access_token: 'access', refresh_token: 'refresh', expires_in: 3600, token_type: 'Bearer' } }));
-    const callback = 'http://127.0.0.1:8765/callback?code=abc&state=state-1';
+    const callback = 'http://127.0.0.1:8153/callback?code=abc&state=state-1';
     await expect(runCli({
-      argv: ['login', '--json', '--callback', callback, '--verifier', 'verifier-1', '--state', 'state-1', '--redirect-uri', 'http://127.0.0.1:8765/callback'],
+      argv: ['login', '--json', '--callback', callback, '--verifier', 'verifier-1', '--state', 'state-1', '--redirect-uri', 'http://127.0.0.1:8153/callback'],
       env,
       stdout: stdout.stream,
       fetchImpl,

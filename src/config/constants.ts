@@ -1,5 +1,15 @@
-export const PACKAGE_NAME = 'grok-it-mcp';
-export const PACKAGE_VERSION = '0.1.0';
+import { createRequire } from 'node:module';
+
+type PackageJson = {
+  name?: string;
+  version?: string;
+};
+
+const require = createRequire(import.meta.url);
+const packageJson = require('../../package.json') as PackageJson;
+
+export const PACKAGE_NAME = packageJson.name || 'grok-it-mcp';
+export const PACKAGE_VERSION = packageJson.version || '0.0.0';
 export const DEFAULT_XAI_BASE_URL = 'https://api.x.ai/v1';
 export const DEFAULT_XAI_AUTH_ISSUER = 'https://auth.x.ai';
 export const DEFAULT_XAI_DISCOVERY_URL = `${DEFAULT_XAI_AUTH_ISSUER}/.well-known/openid-configuration`;
@@ -7,7 +17,7 @@ export const DEFAULT_XAI_OAUTH_CLIENT_ID = 'b1a00492-073a-47ea-816f-4c329264a828
 export const DEFAULT_XAI_OAUTH_SCOPE = 'openid profile email offline_access grok-cli:access api:access';
 export const DEFAULT_REDIRECT_HOST = '127.0.0.1';
 export const DEFAULT_REDIRECT_PATH = '/callback';
-export const DEFAULT_REDIRECT_PORT = 8765;
+export const DEFAULT_REDIRECT_PORT = 8153;
 export const DEFAULT_X_SEARCH_MODEL = 'grok-4.20-reasoning';
 export const DEFAULT_IMAGE_MODEL = 'grok-imagine-image';
 export const DEFAULT_VIDEO_MODEL = 'grok-imagine-video';

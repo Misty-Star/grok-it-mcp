@@ -55,10 +55,10 @@ grok-it-mcp login --open
 
 在服务器、容器或 SSH 会话等没有可用浏览器的环境中，登录流程会打印授权 URL，而不是打开浏览器。
 
-注意：loopback 监听仍然运行在远程机器的 `127.0.0.1:8765`。xAI redirect 需要访问这个监听地址，所以如果你直接在本地电脑浏览器打开授权 URL，可能会失败，除非先转发端口：
+注意：loopback 监听仍然运行在远程机器的 `127.0.0.1:8153`。xAI redirect 需要访问这个监听地址，所以如果你直接在本地电脑浏览器打开授权 URL，可能会失败，除非先转发端口：
 
 ```bash
-ssh -N -L 8765:127.0.0.1:8765 user@remote-host
+ssh -N -L 8153:127.0.0.1:8153 user@remote-host
 grok-it-mcp login --loopback
 ```
 

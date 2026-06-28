@@ -17,7 +17,7 @@ describe('oauth helpers', () => {
     const pkce = generatePkce();
     const url = buildAuthorizeUrl({
       discovery: { authorization_endpoint: 'https://auth.x.ai/oauth2/authorize', token_endpoint: 'https://auth.x.ai/oauth2/token' },
-      redirectUri: 'http://127.0.0.1:8765/callback',
+      redirectUri: 'http://127.0.0.1:8153/callback',
       challenge: pkce.challenge,
       state: 'state',
       nonce: 'nonce',
