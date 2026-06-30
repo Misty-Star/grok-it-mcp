@@ -1,8 +1,9 @@
-import { setTimeout as delay } from 'node:timers/promises';
 import { authStatus } from './auth/credentials.js';
 import { createLoginSession, discoverOAuth, exchangeCodeForTokens, parseCallback, persistTokenResponse, waitForLoopbackCode } from './auth/oauth.js';
 import { PACKAGE_NAME, PACKAGE_VERSION } from './config/constants.js';
 import { getConfig } from './config/env.js';
+import { handleImageGenerate } from './tools/image-generate.js';
+import { handleVideoGenerate } from './tools/video-generate.js';
 import { handleXSearch } from './tools/x-search.js';
 import { XaiClient } from './xai/client.js';
 
@@ -83,8 +84,25 @@ function numberFlag(flags: Map<string, string | boolean>, name: string): number 
   return parsed;
 }
 
+function rangedNumberFlag(flags: Map<string, string | boolean>, name: string, min: number, max: number): number | undefined {
+  const value = numberFlag(flags, name);
+  if (value === undefined) return undefined;
+  if (value < min || value > max) throw new CliError(`--${name} must be between ${min} and ${max}`, 2);
+  return value;
+}
+
 function booleanFlag(flags: Map<string, string | boolean>, name: string): boolean {
   return flags.get(name) === true;
+}
+
+function optionalBooleanFlag(flags: Map<string, string | boolean>, name: string): boolean | undefined {
+  const value = flags.get(name);
+  if (value === undefined) return undefined;
+  if (value === true || value === false) return value;
+  const normalized = value.toLowerCase();
+  if (['1', 'true', 'yes', 'on'].includes(normalized)) return true;
+  if (['0', 'false', 'no', 'off'].includes(normalized)) return false;
+  throw new CliError(`--${name} must be true or false`, 2);
 }
 
 function listFlag(flags: Map<string, string | boolean>, name: string): string[] | undefined {
@@ -94,11 +112,19 @@ function listFlag(flags: Map<string, string | boolean>, name: string): string[] 
   return items.length ? items : undefined;
 }
 
+function textFromArgs(flags: Map<string, string | boolean>, positionals: string[], flagName: string, label: string, example: string): string {
+  const explicit = stringFlag(flags, flagName);
+  const text = explicit || positionals.join(' ').trim();
+  if (!text) throw new CliError(`${label} requires ${flagName === 'query' ? 'a query' : 'a prompt'}, e.g. ${example}`, 2);
+  return text;
+}
+
 function queryFromArgs(flags: Map<string, string | boolean>, positionals: string[]): string {
-  const explicit = stringFlag(flags, 'query');
-  const query = explicit || positionals.join(' ').trim();
-  if (!query) throw new CliError('search requires a query, e.g. grok-it-mcp search "xAI news"', 2);
-  return query;
+  return textFromArgs(flags, positionals, 'query', 'search', 'grok-it-mcp search "xAI news"');
+}
+
+function promptFromArgs(flags: Map<string, string | boolean>, positionals: string[], command: string): string {
+  return textFromArgs(flags, positionals, 'prompt', command, `grok-it-mcp ${command} "a cinematic cat"`);
 }
 
 function printHelp(stdout: Pick<NodeJS.WriteStream, 'write'> | undefined): void {
@@ -108,7 +134,11 @@ function printHelp(stdout: Pick<NodeJS.WriteStream, 'write'> | undefined): void 
   write(stdout, '  grok-it-mcp status|auth-status      Show Grok auth status\n');
   write(stdout, '  grok-it-mcp login [options]         Run Grok OAuth login\n');
   write(stdout, '  grok-it-mcp search <query>          Run X search through Grok/xAI\n');
-  write(stdout, '  grok-it-mcp x-search <query>        Alias for search\n\n');
+  write(stdout, '  grok-it-mcp x-search <query>        Alias for search\n');
+  write(stdout, '  grok-it-mcp image-gen <prompt>      Generate image(s) through Grok/xAI\n');
+  write(stdout, '  grok-it-mcp image_gen <prompt>      Alias for image-gen\n');
+  write(stdout, '  grok-it-mcp video-gen <prompt>      Generate a video through Grok/xAI\n');
+  write(stdout, '  grok-it-mcp video_gen <prompt>      Alias for video-gen\n\n');
   write(stdout, 'Login options:\n');
   write(stdout, '  --loopback                          Wait for the local OAuth callback and save tokens\n');
   write(stdout, '  --open                              Open the authorize URL in your browser; implies --loopback\n');
@@ -129,11 +159,34 @@ function printHelp(stdout: Pick<NodeJS.WriteStream, 'write'> | undefined): void 
   write(stdout, '  --include-videos                    Include video results in X search parameters\n');
   write(stdout, '  --max-results <n>                   Maximum X search results, 1-50\n');
   write(stdout, '  --json                              Print machine-readable JSON\n\n');
+  write(stdout, 'Image options:\n');
+  write(stdout, '  --prompt <text>                     Prompt alternative to positional args\n');
+  write(stdout, '  --model <model>                     Override image generation model\n');
+  write(stdout, '  --aspect-ratio <ratio>              Aspect ratio, e.g. 16:9\n');
+  write(stdout, '  --resolution <size>                 Resolution override\n');
+  write(stdout, '  --n <1-4>                           Number of images, default 1\n');
+  write(stdout, '  --cache <true|false>, --no-cache    Cache returned image artifacts, default true\n');
+  write(stdout, '  --json                              Print machine-readable JSON\n\n');
+  write(stdout, 'Video options:\n');
+  write(stdout, '  --prompt <text>                     Prompt alternative to positional args\n');
+  write(stdout, '  --model <model>                     Override video generation model\n');
+  write(stdout, '  --image-url <url>                   Source image URL for image-to-video\n');
+  write(stdout, '  --reference-images <url1,url2>      Comma-separated reference image URLs\n');
+  write(stdout, '  --duration <1-30>                   Video duration\n');
+  write(stdout, '  --aspect-ratio <ratio>              Aspect ratio, e.g. 16:9\n');
+  write(stdout, '  --resolution <size>                 Resolution override\n');
+  write(stdout, '  --poll-interval-ms <250-30000>      Poll interval, default 2000\n');
+  write(stdout, '  --timeout-ms <1000-1800000>         Overall timeout, default 600000\n');
+  write(stdout, '  --cache-video <true|false>          Download/cache the generated video\n');
+  write(stdout, '  --no-cache-video                    Return remote video URL without caching\n');
+  write(stdout, '  --json                              Print machine-readable JSON\n\n');
   write(stdout, 'Examples:\n');
   write(stdout, '  grok-it-mcp status\n');
   write(stdout, '  grok-it-mcp login --open\n');
   write(stdout, '  grok-it-mcp search "xAI news"\n');
   write(stdout, '  grok-it-mcp x-search "grok updates" --include-handles xai --max-results 5 --json\n');
+  write(stdout, '  grok-it-mcp image-gen "a neon robot in Shanghai" --aspect-ratio 16:9\n');
+  write(stdout, '  grok-it-mcp video-gen "waves crashing at sunset" --duration 6 --json\n');
   write(stdout, '  grok-it-mcp login --callback "$CALLBACK" --verifier "$VERIFIER" --state "$STATE" --redirect-uri http://127.0.0.1:8153/callback\n');
 }
 
@@ -277,6 +330,81 @@ async function runSearch(flags: Map<string, string | boolean>, positionals: stri
   return 0;
 }
 
+
+type ImageOutput = {
+  image?: unknown;
+  remote_url?: unknown;
+  bytes?: unknown;
+  content_type?: unknown;
+  revised_prompt?: unknown;
+};
+
+async function runImageGenerate(flags: Map<string, string | boolean>, positionals: string[], options: CliOptions): Promise<number> {
+  const stdout = options.stdout || process.stdout;
+  const n = rangedNumberFlag(flags, 'n', 1, 4);
+  const cache = booleanFlag(flags, 'no-cache') ? false : optionalBooleanFlag(flags, 'cache');
+  const args = {
+    prompt: promptFromArgs(flags, positionals, 'image-gen'),
+    model: stringFlag(flags, 'model'),
+    aspect_ratio: stringFlag(flags, 'aspect-ratio'),
+    resolution: stringFlag(flags, 'resolution'),
+    n,
+    cache,
+  };
+
+  const result = await handleImageGenerate(args, new XaiClient({ env: options.env || process.env, fetchImpl: options.fetchImpl }), options.fetchImpl, options.env || process.env);
+  if (booleanFlag(flags, 'json')) {
+    write(stdout, `${JSON.stringify(result, null, 2)}\n`);
+    return 0;
+  }
+
+  write(stdout, 'Images:\n');
+  result.images.forEach((image: ImageOutput, index: number) => {
+    write(stdout, `- [${index + 1}] ${String(image.image || image.remote_url || '(no image URL/path returned)')}\n`);
+    if (image.bytes) write(stdout, `  Bytes: ${String(image.bytes)}\n`);
+    if (image.content_type) write(stdout, `  Content type: ${String(image.content_type)}\n`);
+    if (image.remote_url && image.remote_url !== image.image) write(stdout, `  Remote URL: ${String(image.remote_url)}\n`);
+    if (image.revised_prompt) write(stdout, `  Revised prompt: ${String(image.revised_prompt)}\n`);
+  });
+  write(stdout, `Model: ${String(result.model)}\n`);
+  write(stdout, `Credential source: ${result.credential_source}\n`);
+  return 0;
+}
+
+async function runVideoGenerate(flags: Map<string, string | boolean>, positionals: string[], options: CliOptions): Promise<number> {
+  const stdout = options.stdout || process.stdout;
+  const cacheVideo = booleanFlag(flags, 'no-cache-video') ? false : optionalBooleanFlag(flags, 'cache-video');
+  const args = {
+    prompt: promptFromArgs(flags, positionals, 'video-gen'),
+    model: stringFlag(flags, 'model'),
+    image_url: stringFlag(flags, 'image-url'),
+    reference_images: listFlag(flags, 'reference-images'),
+    duration: rangedNumberFlag(flags, 'duration', 1, 30),
+    aspect_ratio: stringFlag(flags, 'aspect-ratio'),
+    resolution: stringFlag(flags, 'resolution'),
+    poll_interval_ms: rangedNumberFlag(flags, 'poll-interval-ms', 250, 30000),
+    timeout_ms: rangedNumberFlag(flags, 'timeout-ms', 1000, 30 * 60_000),
+    cache_video: cacheVideo,
+  };
+
+  const result = await handleVideoGenerate(args, new XaiClient({ env: options.env || process.env, fetchImpl: options.fetchImpl }), options.fetchImpl, options.env || process.env);
+  if (booleanFlag(flags, 'json')) {
+    write(stdout, `${JSON.stringify(result, null, 2)}\n`);
+    return 0;
+  }
+
+  write(stdout, `Video: ${String(result.video || '(not ready)')}\n`);
+  if (result.remote_url) write(stdout, `Remote URL: ${String(result.remote_url)}\n`);
+  write(stdout, `Request ID: ${String(result.request_id)}\n`);
+  write(stdout, `Status: ${String(result.status)}\n`);
+  if (result.bytes) write(stdout, `Bytes: ${String(result.bytes)}\n`);
+  if (result.content_type) write(stdout, `Content type: ${String(result.content_type)}\n`);
+  if (result.timeout) write(stdout, 'Timed out before completion. Re-run with a larger --timeout-ms to wait longer.\n');
+  if (result.cache_warning) write(stdout, `Cache warning: ${String(result.cache_warning)}\n`);
+  write(stdout, `Credential source: ${result.credential_source}\n`);
+  return 0;
+}
+
 export async function runCli(options: CliOptions = {}): Promise<number> {
   const argv = options.argv || process.argv.slice(2);
   const parsed = parseArgs(argv);
@@ -294,6 +422,8 @@ export async function runCli(options: CliOptions = {}): Promise<number> {
   if (command === 'status' || command === 'auth-status' || command === 'auth_status') return runStatus(parsed.flags, options);
   if (command === 'login') return runLogin(parsed.flags, options);
   if (command === 'search' || command === 'x-search' || command === 'x_search') return runSearch(parsed.flags, parsed.positionals, options);
+  if (command === 'image-gen' || command === 'image_gen' || command === 'image-generate' || command === 'image_generate') return runImageGenerate(parsed.flags, parsed.positionals, options);
+  if (command === 'video-gen' || command === 'video_gen' || command === 'video-generate' || command === 'video_generate') return runVideoGenerate(parsed.flags, parsed.positionals, options);
 
   throw new CliError(`Unknown command: ${command}`, 2);
 }

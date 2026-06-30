@@ -62,12 +62,16 @@ ssh -N -L 8153:127.0.0.1:8153 user@remote-host
 grok-it-mcp login --loopback
 ```
 
-You can also check local auth and run a quick X Search connectivity test from the terminal:
+You can also check local auth and run quick generation/search commands from the terminal:
 
 ```bash
 grok-it-mcp status
 grok-it-mcp search "xAI news"
+grok-it-mcp image-gen "a neon robot in Shanghai" --aspect-ratio 16:9
+grok-it-mcp video-gen "waves crashing at sunset" --duration 6 --json
 ```
+
+CLI aliases with underscores are also supported: `image_gen` and `video_gen`.
 
 ### 🛒 Codex CLI: add the marketplace once
 
@@ -125,3 +129,10 @@ Default local paths (resolved inside the MCP server/CLI, not via plugin JSON pla
 - `grok_x_search`: search X / Twitter with Grok.
 - `grok_image_generate`: generate images and cache image files by default.
 - `grok_video_generate`: generate videos, returning remote URLs by default with optional local caching.
+
+## 🧪 npm CLI commands
+
+Besides starting the MCP server with no arguments, the npm binary exposes:
+
+- `grok-it-mcp image-gen <prompt>` / `image_gen`: generate image(s). Useful flags: `--prompt`, `--model`, `--aspect-ratio`, `--resolution`, `--n <1-4>`, `--no-cache`, `--json`.
+- `grok-it-mcp video-gen <prompt>` / `video_gen`: generate video. Useful flags: `--prompt`, `--model`, `--image-url`, `--reference-images <url1,url2>`, `--duration <1-30>`, `--aspect-ratio`, `--resolution`, `--cache-video <true|false>`, `--json`.

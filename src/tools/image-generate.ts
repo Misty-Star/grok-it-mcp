@@ -25,7 +25,7 @@ export function buildImagePayload(args: ImageGenerateArgs) {
   };
 }
 
-export async function handleImageGenerate(args: ImageGenerateArgs, client = new XaiClient(), fetchImpl?: typeof fetch) {
+export async function handleImageGenerate(args: ImageGenerateArgs, client = new XaiClient(), fetchImpl?: typeof fetch, env: NodeJS.ProcessEnv = process.env) {
   const { data, credentials } = await client.json('/images/generations', { method: 'POST', body: buildImagePayload(args) });
   const images = ((data as Record<string, unknown>).data || []) as Array<Record<string, unknown>>;
   if (!Array.isArray(images) || images.length === 0) throw new Error('xAI image response did not contain data[]');
@@ -33,10 +33,10 @@ export async function handleImageGenerate(args: ImageGenerateArgs, client = new 
   for (const image of images) {
     const contentType = typeof image.mime_type === 'string' ? image.mime_type : 'image/png';
     if (args.cache !== false && typeof image.b64_json === 'string') {
-      const cached = await cacheBase64Artifact(image.b64_json, { mediaType: 'image', contentType, cacheDir: getConfig().cacheDir });
+      const cached = await cacheBase64Artifact(image.b64_json, { mediaType: 'image', contentType, cacheDir: getConfig(env).cacheDir });
       outputs.push({ image: cached.path, bytes: cached.bytes, content_type: cached.contentType, revised_prompt: image.revised_prompt ?? null });
     } else if (args.cache !== false && typeof image.url === 'string') {
-      const cached = await cacheUrlArtifact(image.url, { mediaType: 'image', cacheDir: getConfig().cacheDir, fetchImpl });
+      const cached = await cacheUrlArtifact(image.url, { mediaType: 'image', cacheDir: getConfig(env).cacheDir, fetchImpl });
       outputs.push({ image: cached.path, remote_url: image.url, bytes: cached.bytes, content_type: cached.contentType, revised_prompt: image.revised_prompt ?? null });
     } else {
       outputs.push({ image: typeof image.url === 'string' ? image.url : null, remote_url: image.url ?? null, revised_prompt: image.revised_prompt ?? null });

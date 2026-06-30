@@ -151,6 +151,53 @@ describe('CLI', () => {
     });
   });
 
+  it('runs image_gen with prompt flags and caches b64 images', async () => {
+    const env = { ...(await tmpEnv('image-gen')), XAI_API_KEY: 'key' } as NodeJS.ProcessEnv;
+    const stdout = capture();
+    const fetchImpl = vi.fn().mockResolvedValue(mockResponse({
+      body: {
+        model: 'image-model-1',
+        data: [{ b64_json: Buffer.from('png').toString('base64'), mime_type: 'image/png', revised_prompt: 'brighter cat' }],
+      },
+    }));
+
+    await expect(runCli({
+      argv: ['image_gen', '--prompt', 'cat portrait', '--aspect-ratio', '16:9', '--resolution', '1024x576', '--n', '1', '--json'],
+      env,
+      stdout: stdout.stream,
+      fetchImpl,
+    })).resolves.toBe(0);
+
+    const result = JSON.parse(stdout.output());
+    expect(result).toMatchObject({ model: 'image-model-1', credential_source: 'xai' });
+    expect(result.images[0]).toMatchObject({ content_type: 'image/png', revised_prompt: 'brighter cat' });
+    expect(result.images[0].image).toContain(env.GROK_IT_CACHE_DIR);
+    const [, init] = fetchImpl.mock.calls[0];
+    expect(String(fetchImpl.mock.calls[0][0])).toBe('https://api.x.ai/v1/images/generations');
+    expect(JSON.parse(String(init.body))).toMatchObject({ prompt: 'cat portrait', aspect_ratio: '16:9', resolution: '1024x576', n: 1 });
+  });
+
+  it('runs video-gen with options and returns JSON output', async () => {
+    const env = { ...(await tmpEnv('video-gen')), XAI_API_KEY: 'key' } as NodeJS.ProcessEnv;
+    const stdout = capture();
+    const fetchImpl = vi.fn().mockResolvedValue(mockResponse({
+      body: { request_id: 'req-1', status: 'completed', video_url: 'https://cdn.x.ai/video.mp4' },
+    }));
+
+    await expect(runCli({
+      argv: ['video-gen', 'sunset waves', '--duration', '6', '--aspect-ratio', '16:9', '--cache-video', 'false', '--json'],
+      env,
+      stdout: stdout.stream,
+      fetchImpl,
+    })).resolves.toBe(0);
+
+    const result = JSON.parse(stdout.output());
+    expect(result).toMatchObject({ video: 'https://cdn.x.ai/video.mp4', remote_url: 'https://cdn.x.ai/video.mp4', request_id: 'req-1', credential_source: 'xai' });
+    const [, init] = fetchImpl.mock.calls[0];
+    expect(String(fetchImpl.mock.calls[0][0])).toBe('https://api.x.ai/v1/videos/generations');
+    expect(JSON.parse(String(init.body))).toMatchObject({ prompt: 'sunset waves', duration: 6, aspect_ratio: '16:9' });
+  });
+
   it('requires search query and validates max results', async () => {
     await expect(runCli({ argv: ['search'] })).rejects.toThrow(/requires a query/);
     await expect(runCli({ argv: ['x-search', 'q', '--max-results', '99'] })).rejects.toThrow(/between 1 and 50/);

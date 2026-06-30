@@ -69,10 +69,11 @@ export async function handleVideoGenerate(args: VideoGenerateArgs, client = new 
     if (directUrl || ['done', 'completed', 'succeeded', 'success'].includes(status)) {
       const remoteUrl = directUrl || videoUrlOf(last);
       if (!remoteUrl) throw new Error('xAI video completed without a video URL');
-      const shouldCache = args.cache_video ?? getConfig().cacheVideoByDefault;
+      const config = getConfig(env);
+      const shouldCache = args.cache_video ?? config.cacheVideoByDefault;
       if (shouldCache) {
         try {
-          const cached = await cacheUrlArtifact(remoteUrl, { mediaType: 'video', cacheDir: getConfig().cacheDir, fetchImpl });
+          const cached = await cacheUrlArtifact(remoteUrl, { mediaType: 'video', cacheDir: config.cacheDir, fetchImpl });
           return { video: cached.path, remote_url: remoteUrl, request_id: requestId, status: status || 'completed', bytes: cached.bytes, content_type: cached.contentType, credential_source: credentials.credentialSource };
         } catch (error) {
           return { video: remoteUrl, remote_url: remoteUrl, request_id: requestId, status: status || 'completed', cache_warning: (error as Error).message, credential_source: credentials.credentialSource };

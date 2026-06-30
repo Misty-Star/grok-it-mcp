@@ -62,12 +62,16 @@ ssh -N -L 8153:127.0.0.1:8153 user@remote-host
 grok-it-mcp login --loopback
 ```
 
-也可以在终端检查本地认证状态，并快速测试 X Search 连通性：
+也可以在终端检查本地认证状态，并快速运行搜索 / 生成命令：
 
 ```bash
 grok-it-mcp status
 grok-it-mcp search "xAI news"
+grok-it-mcp image-gen "a neon robot in Shanghai" --aspect-ratio 16:9
+grok-it-mcp video-gen "waves crashing at sunset" --duration 6 --json
 ```
+
+CLI 也支持下划线别名：`image_gen` 和 `video_gen`。
 
 ### 🛒 Codex CLI：添加市场（只需一次）
 
@@ -125,3 +129,10 @@ codex plugin marketplace upgrade grok-it
 - `grok_x_search`：使用 Grok 搜索 X / Twitter。
 - `grok_image_generate`：生成图片并默认缓存图片文件。
 - `grok_video_generate`：生成视频，默认返回远程 URL，可选本地缓存。
+
+## 🧪 npm CLI 命令
+
+除了无参数启动 MCP server 外，npm binary 还提供：
+
+- `grok-it-mcp image-gen <prompt>` / `image_gen`：生成图片。常用参数：`--prompt`、`--model`、`--aspect-ratio`、`--resolution`、`--n <1-4>`、`--no-cache`、`--json`。
+- `grok-it-mcp video-gen <prompt>` / `video_gen`：生成视频。常用参数：`--prompt`、`--model`、`--image-url`、`--reference-images <url1,url2>`、`--duration <1-30>`、`--aspect-ratio`、`--resolution`、`--cache-video <true|false>`、`--json`。
