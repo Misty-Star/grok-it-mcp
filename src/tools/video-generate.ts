@@ -48,15 +48,28 @@ function videoUrlOf(data: unknown): string | undefined {
   const obj = data as Record<string, unknown>;
   if (typeof obj.video_url === 'string') return obj.video_url;
   if (typeof obj.url === 'string') return obj.url;
+
+  const video = obj.video as Record<string, unknown> | undefined;
+  if (typeof video?.url === 'string') return video.url;
+  if (typeof video?.video_url === 'string') return video.video_url;
+
+  const response = obj.response as Record<string, unknown> | undefined;
+  const responseVideo = response?.video as Record<string, unknown> | undefined;
+  if (typeof responseVideo?.url === 'string') return responseVideo.url;
+  if (typeof responseVideo?.video_url === 'string') return responseVideo.video_url;
+
   if (Array.isArray(obj.data)) {
     const first = obj.data[0] as Record<string, unknown> | undefined;
     if (typeof first?.url === 'string') return first.url;
     if (typeof first?.video_url === 'string') return first.video_url;
+    const firstVideo = first?.video as Record<string, unknown> | undefined;
+    if (typeof firstVideo?.url === 'string') return firstVideo.url;
+    if (typeof firstVideo?.video_url === 'string') return firstVideo.video_url;
   }
   return undefined;
 }
 
-export async function handleVideoGenerate(args: VideoGenerateArgs, client = new XaiClient(), fetchImpl?: typeof fetch) {
+export async function handleVideoGenerate(args: VideoGenerateArgs, client = new XaiClient(), fetchImpl?: typeof fetch, env: NodeJS.ProcessEnv = process.env) {
   const { data: submitted, credentials } = await client.json('/videos/generations', { method: 'POST', body: buildVideoPayload(args) });
   const submitObj = submitted as Record<string, unknown>;
   const requestId = String(submitObj.request_id || submitObj.id || '');

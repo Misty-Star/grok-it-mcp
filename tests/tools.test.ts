@@ -45,4 +45,14 @@ describe('tool handlers', () => {
     const result = await handleVideoGenerate({ prompt: 'q', timeout_ms: 1000 }, client);
     expect(result).toMatchObject({ video: 'https://cdn.x.ai/video.mp4', remote_url: 'https://cdn.x.ai/video.mp4', request_id: 'req' });
   });
+
+  it('video reads nested URL from xAI deferred video result', async () => {
+    const client = {
+      json: vi.fn()
+        .mockResolvedValueOnce({ data: { request_id: 'req', status: 'pending' }, credentials })
+        .mockResolvedValueOnce({ data: { request_id: 'req', status: 'done', video: { url: 'https://vidgen.x.ai/video.mp4', duration: 6 } }, credentials }),
+    } as unknown as XaiClient;
+    const result = await handleVideoGenerate({ prompt: 'q', poll_interval_ms: 250, timeout_ms: 1000 }, client);
+    expect(result).toMatchObject({ video: 'https://vidgen.x.ai/video.mp4', remote_url: 'https://vidgen.x.ai/video.mp4', request_id: 'req', status: 'done' });
+  });
 });
