@@ -1,6 +1,6 @@
 {
   "name": "grok-it-mcp",
-  "version": "0.3",
+  "version": "0.3.0",
   "description": "Agent plugin wrapper around a local MCP server for Grok x_search, image generation, and video generation.",
   "type": "module",
   "bin": {

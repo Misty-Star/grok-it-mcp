@@ -2,10 +2,7 @@
   "mcpServers": {
     "grok-it": {
       "command": "npx",
-      "args": [
-        "-y",
-        "grok-it-mcp@0.3"
-      ]
+      "args": ["-y", "grok-it-mcp@0.3.0"]
     }
   }
 }
