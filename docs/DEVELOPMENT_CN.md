@@ -81,13 +81,13 @@ node dist/index.js status
   "mcpServers": {
     "grok-it": {
       "command": "npx",
-      "args": ["-y", "grok-it-mcp@0.3.0"]
+      "args": ["-y", "grok-it-mcp@0.4.0"]
     }
   }
 }
 ```
 
-`npx -y grok-it-mcp@0.3.0` 会拉 registry 上的包，**不会**用当前仓库的 `dist/`。
+`npx -y grok-it-mcp@0.4.0` 会拉 registry 上的包，**不会**用当前仓库的 `dist/`。
 
 本地给 Agent 试的时候，把该文件临时改成已构建的二进制（不要提交）：
 

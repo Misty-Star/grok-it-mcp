@@ -81,13 +81,13 @@ node dist/index.js status
   "mcpServers": {
     "grok-it": {
       "command": "npx",
-      "args": ["-y", "grok-it-mcp@0.3.0"]
+      "args": ["-y", "grok-it-mcp@0.4.0"]
     }
   }
 }
 ```
 
-`npx -y grok-it-mcp@0.3.0` downloads the published tarball. It will **not** pick up `dist/` from this clone.
+`npx -y grok-it-mcp@0.4.0` downloads the published tarball. It will **not** pick up `dist/` from this clone.
 
 For local Agent testing, temporarily change that file (do not commit it) to the built binary:
 
