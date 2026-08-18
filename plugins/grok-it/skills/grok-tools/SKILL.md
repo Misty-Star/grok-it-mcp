@@ -24,7 +24,7 @@ Auth resolution follows a fallback chain: OAuth token → refresh token → XAI_
 
 ## Model Selection
 
-- **X search**: uses `grok-4.20-reasoning` by default. Override via `model` param only if the user requests a specific model.
+- **X search**: uses `grok-4.5` by default. Override via `model` param only if the user requests a specific model.
 - **Image generation**: uses `grok-imagine-image` by default.
 - **Video generation**: model is chosen automatically based on input:
   - Text-to-video (prompt only) → `grok-imagine-video`

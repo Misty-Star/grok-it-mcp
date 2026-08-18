@@ -13,6 +13,7 @@ describe('payload builders', () => {
   it('builds official Responses x_search payload', () => {
     const payload = buildXSearchPayload({ query: 'news', include_handles: ['@xai', 'elonmusk'], include_images: true, include_videos: true });
     expect(payload).toMatchObject({
+      model: 'grok-4.5',
       input: [{ role: 'user', content: 'news' }],
       include: ['x_search_call'],
       tools: [{
