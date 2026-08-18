@@ -9,7 +9,7 @@ Prefer the local `grok-it` MCP server tools rather than reimplementing xAI HTTP 
 
 1. Run `grok_auth_status` to check OAuth/API-key availability without exposing secrets.
 2. Run `grok_login` when OAuth setup is needed. First call returns an authorize URL plus PKCE verifier/state; second call with the callback URL completes login. Never request raw access or refresh tokens.
-3. Use `grok_x_search` for X/Twitter search with optional handle/date/media filters.
+3. Use `grok_x_search` for X/Twitter search. Handle filters map to official `allowed_x_handles` / `excluded_x_handles` (max 20, mutually exclusive). `include_images` / `include_videos` enable official image/video understanding, not a media-result toggle. Responses does not return raw posts; the tool requests `include: ["x_search_call"]` and surfaces `search_calls` (x_keyword_search / x_semantic_search / x_user_search / x_thread_fetch invocations) plus citation URLs from message annotations.
 4. Use `grok_image_generate` for image generation. It returns local cached image paths by default.
 5. Use `grok_video_generate` for video generation. It returns remote URLs by default; pass `cache_video:true` only when local video caching is desired.
 

@@ -121,7 +121,11 @@ describe('CLI', () => {
     expect(fetchImpl).toHaveBeenCalledOnce();
     const [, init] = fetchImpl.mock.calls[0];
     expect(String(fetchImpl.mock.calls[0][0])).toBe('https://api.x.ai/v1/responses');
-    expect(JSON.parse(String(init.body))).toMatchObject({ input: 'xAI news', tools: [{ type: 'x_search' }] });
+    expect(JSON.parse(String(init.body))).toMatchObject({
+      input: [{ role: 'user', content: 'xAI news' }],
+      include: ['x_search_call'],
+      tools: [{ type: 'x_search' }],
+    });
   });
 
   it('runs x-search alias with flags and JSON output', async () => {
@@ -129,7 +133,7 @@ describe('CLI', () => {
     const stdout = capture();
     const fetchImpl = vi.fn().mockResolvedValue(mockResponse({ body: { output_text: 'json answer', citations: [], id: 'resp-2', model: 'model-2' } }));
     await expect(runCli({
-      argv: ['x-search', '--query', 'grok updates', '--include-handles', 'xai,elonmusk', '--exclude-handles', 'spam', '--include-images', '--include-videos', '--from-date', '2026-06-01', '--to-date', '2026-06-22', '--max-results', '5', '--json'],
+      argv: ['x-search', '--query', 'grok updates', '--include-handles', 'xai,elonmusk', '--include-images', '--include-videos', '--from-date', '2026-06-01', '--to-date', '2026-06-22', '--json'],
       env,
       stdout: stdout.stream,
       fetchImpl,
@@ -138,17 +142,18 @@ describe('CLI', () => {
     expect(result).toMatchObject({ answer: 'json answer', raw_id: 'resp-2', credential_source: 'xai' });
     const [, init] = fetchImpl.mock.calls[0];
     expect(JSON.parse(String(init.body))).toMatchObject({
-      input: 'grok updates',
+      input: [{ role: 'user', content: 'grok updates' }],
+      include: ['x_search_call'],
       tools: [{
         type: 'x_search',
         from_date: '2026-06-01',
         to_date: '2026-06-22',
-        included_x_handles: ['xai', 'elonmusk'],
-        excluded_x_handles: ['spam'],
-        search_parameters: { include_images: true, include_videos: true },
-        max_search_results: 5,
+        allowed_x_handles: ['xai', 'elonmusk'],
+        enable_image_understanding: true,
+        enable_video_understanding: true,
       }],
     });
+    expect(JSON.parse(String(init.body)).tools[0]).not.toHaveProperty('max_search_results');
   });
 
   it('runs image_gen with prompt flags and caches b64 images', async () => {
@@ -198,9 +203,9 @@ describe('CLI', () => {
     expect(JSON.parse(String(init.body))).toMatchObject({ prompt: 'sunset waves', duration: 6, aspect_ratio: '16:9' });
   });
 
-  it('requires search query and validates max results', async () => {
+  it('requires search query and rejects mixed handle filters', async () => {
     await expect(runCli({ argv: ['search'] })).rejects.toThrow(/requires a query/);
-    await expect(runCli({ argv: ['x-search', 'q', '--max-results', '99'] })).rejects.toThrow(/between 1 and 50/);
+    await expect(runCli({ argv: ['x-search', 'q', '--include-handles', 'xai', '--exclude-handles', 'spam'] })).rejects.toThrow(/cannot be used together/);
   });
 
 });

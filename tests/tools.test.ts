@@ -10,10 +10,30 @@ import { XaiClient } from '../src/xai/client.js';
 const credentials = { provider: 'xai' as const, credentialSource: 'xai' as const, authorization: 'Bearer test', baseUrl: 'https://api.x.ai/v1' };
 
 describe('payload builders', () => {
-  it('builds x_search responses payload', () => {
-    const payload = buildXSearchPayload({ query: 'news', include_handles: ['xai'], include_images: true, include_videos: false });
-    expect(payload.tools[0]).toMatchObject({ type: 'x_search', included_x_handles: ['xai'] });
-    expect(payload.input).toBe('news');
+  it('builds official Responses x_search payload', () => {
+    const payload = buildXSearchPayload({ query: 'news', include_handles: ['@xai', 'elonmusk'], include_images: true, include_videos: true });
+    expect(payload).toMatchObject({
+      input: [{ role: 'user', content: 'news' }],
+      include: ['x_search_call'],
+      tools: [{
+        type: 'x_search',
+        allowed_x_handles: ['xai', 'elonmusk'],
+        enable_image_understanding: true,
+        enable_video_understanding: true,
+      }],
+    });
+    expect(payload.tools[0]).not.toHaveProperty('included_x_handles');
+    expect(payload.tools[0]).not.toHaveProperty('search_parameters');
+    expect(payload.tools[0]).not.toHaveProperty('max_search_results');
+  });
+
+  it('rejects mixing allowed and excluded handles', () => {
+    expect(() => buildXSearchPayload({ query: 'q', include_handles: ['xai'], exclude_handles: ['spam'] })).toThrow(/cannot be used together/i);
+  });
+
+  it('rejects more than 20 handles', () => {
+    const handles = Array.from({ length: 21 }, (_, index) => `user${index}`);
+    expect(() => buildXSearchPayload({ query: 'q', include_handles: handles })).toThrow(/at most 20/);
   });
 
   it('builds image and video payloads', () => {
@@ -23,9 +43,58 @@ describe('payload builders', () => {
 });
 
 describe('tool handlers', () => {
-  it('parses x_search answer', async () => {
-    const client = { json: vi.fn().mockResolvedValue({ data: { output_text: 'answer', citations: ['https://x.com/a'] }, credentials }) } as unknown as XaiClient;
-    await expect(handleXSearch({ query: 'q' }, client)).resolves.toMatchObject({ answer: 'answer', credential_source: 'xai' });
+  it('parses custom_tool_call invocations and annotation citations', async () => {
+    const client = {
+      json: vi.fn().mockResolvedValue({
+        data: {
+          id: 'resp-1',
+          model: 'grok-4.20-reasoning',
+          output: [
+            {
+              type: 'custom_tool_call',
+              name: 'x_keyword_search',
+              status: 'completed',
+              call_id: 'xs_1',
+              input: '{"query":"from:xai","limit":"5","mode":"Latest"}',
+            },
+            {
+              type: 'message',
+              content: [{
+                type: 'output_text',
+                text: 'answer',
+                annotations: [{ type: 'url_citation', url: 'https://x.com/a/status/1', title: '1' }],
+              }],
+            },
+          ],
+        },
+        credentials,
+      }),
+    } as unknown as XaiClient;
+    await expect(handleXSearch({ query: 'q' }, client)).resolves.toMatchObject({
+      answer: 'answer',
+      citations: ['https://x.com/a/status/1'],
+      credential_source: 'xai',
+      include: ['x_search_call'],
+      search_calls: [{
+        type: 'custom_tool_call',
+        name: 'x_keyword_search',
+        input: { query: 'from:xai', limit: '5', mode: 'Latest' },
+      }],
+      sources: ['https://x.com/a/status/1'],
+    });
+  });
+
+  it('retries without include when Responses rejects the include field', async () => {
+    const { XaiError } = await import('../src/xai/client.js');
+    const client = {
+      json: vi.fn()
+        .mockRejectedValueOnce(new XaiError('xai_http_error', 'Unknown include field', 400, { error: 'Unknown include field' }))
+        .mockResolvedValueOnce({ data: { output_text: 'fallback', citations: [] }, credentials }),
+    } as unknown as XaiClient;
+    const result = await handleXSearch({ query: 'q' }, client);
+    expect(result).toMatchObject({ answer: 'fallback', include_fallback: true, include: [] });
+    expect(client.json).toHaveBeenCalledTimes(2);
+    expect(JSON.stringify(client.json.mock.calls[1][1].body)).not.toContain('"include"');
   });
 
   it('handles image b64 output without real network', async () => {

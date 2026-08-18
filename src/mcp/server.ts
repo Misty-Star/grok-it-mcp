@@ -54,7 +54,7 @@ export function createGrokMcpServer(): McpServer {
 
   server.registerTool('grok_x_search', {
     title: 'Search X with Grok',
-    description: 'Use xAI Responses API with the x_search built-in tool to search X/Twitter and summarize results.',
+    description: 'Use xAI Responses API with the official x_search tool to search X/Twitter. Returns the summarized answer, url citations, and any x_* custom_tool_call invocations.',
     inputSchema: xSearchSchema,
   }, async (args) => jsonContent(await handleXSearch(args)));
 

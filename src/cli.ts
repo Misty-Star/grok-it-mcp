@@ -153,11 +153,10 @@ function printHelp(stdout: Pick<NodeJS.WriteStream, 'write'> | undefined): void 
   write(stdout, '  --model <model>                     Override xAI Responses model\n');
   write(stdout, '  --from-date <YYYY-MM-DD>            Inclusive lower date bound\n');
   write(stdout, '  --to-date <YYYY-MM-DD>              Inclusive upper date bound\n');
-  write(stdout, '  --include-handles <a,b>             Comma-separated X handles to include\n');
-  write(stdout, '  --exclude-handles <a,b>             Comma-separated X handles to exclude\n');
-  write(stdout, '  --include-images                    Include image results in X search parameters\n');
-  write(stdout, '  --include-videos                    Include video results in X search parameters\n');
-  write(stdout, '  --max-results <n>                   Maximum X search results, 1-50\n');
+  write(stdout, '  --include-handles <a,b>             Only consider these X handles (max 20)\n');
+  write(stdout, '  --exclude-handles <a,b>             Exclude these X handles (max 20); not with --include-handles\n');
+  write(stdout, '  --include-images                    Enable image understanding in X posts\n');
+  write(stdout, '  --include-videos                    Enable video understanding in X posts\n');
   write(stdout, '  --json                              Print machine-readable JSON\n\n');
   write(stdout, 'Image options:\n');
   write(stdout, '  --prompt <text>                     Prompt alternative to positional args\n');
@@ -184,7 +183,7 @@ function printHelp(stdout: Pick<NodeJS.WriteStream, 'write'> | undefined): void 
   write(stdout, '  grok-it-mcp status\n');
   write(stdout, '  grok-it-mcp login --open\n');
   write(stdout, '  grok-it-mcp search "xAI news"\n');
-  write(stdout, '  grok-it-mcp x-search "grok updates" --include-handles xai --max-results 5 --json\n');
+  write(stdout, '  grok-it-mcp x-search "grok updates" --include-handles xai --json\n');
   write(stdout, '  grok-it-mcp image-gen "a neon robot in Shanghai" --aspect-ratio 16:9\n');
   write(stdout, '  grok-it-mcp video-gen "waves crashing at sunset" --duration 6 --json\n');
   write(stdout, '  grok-it-mcp login --callback "$CALLBACK" --verifier "$VERIFIER" --state "$STATE" --redirect-uri http://127.0.0.1:8153/callback\n');
@@ -301,9 +300,6 @@ async function runLogin(flags: Map<string, string | boolean>, options: CliOption
 
 async function runSearch(flags: Map<string, string | boolean>, positionals: string[], options: CliOptions): Promise<number> {
   const stdout = options.stdout || process.stdout;
-  const maxResults = numberFlag(flags, 'max-results');
-  if (maxResults !== undefined && (maxResults < 1 || maxResults > 50)) throw new CliError('--max-results must be between 1 and 50', 2);
-
   const args = {
     query: queryFromArgs(flags, positionals),
     model: stringFlag(flags, 'model'),
@@ -313,7 +309,6 @@ async function runSearch(flags: Map<string, string | boolean>, positionals: stri
     exclude_handles: listFlag(flags, 'exclude-handles'),
     include_images: booleanFlag(flags, 'include-images') ? true : undefined,
     include_videos: booleanFlag(flags, 'include-videos') ? true : undefined,
-    max_results: maxResults,
   };
 
   const result = await handleXSearch(args, new XaiClient({ env: options.env || process.env, fetchImpl: options.fetchImpl }));
@@ -324,8 +319,10 @@ async function runSearch(flags: Map<string, string | boolean>, positionals: stri
 
   write(stdout, `${result.answer || '(no answer returned)'}\n`);
   if (result.citations.length) write(stdout, `\nCitations:\n${result.citations.map((citation) => `- ${citation}`).join('\n')}\n`);
+  if (result.sources.length) write(stdout, `\nSources:\n${result.sources.map((source) => `- ${typeof source === 'string' ? source : JSON.stringify(source)}`).join('\n')}\n`);
   write(stdout, `\nModel: ${String(result.model)}\n`);
   write(stdout, `Credential source: ${result.credential_source}\n`);
+  if (result.include_fallback) write(stdout, 'Warning: Responses API rejected the include field; retried without it.\n');
   if (result.degraded) write(stdout, 'Warning: response did not include output text. Use --json to inspect metadata.\n');
   return 0;
 }
